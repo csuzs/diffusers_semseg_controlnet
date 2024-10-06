@@ -646,7 +646,7 @@ def get_train_dataset(args, accelerator):
     else:
         if args.train_data_dir is not None:
             dataset = load_dataset(
-                args.train_data_dir,
+                "bdd_dataset.py",
                 cache_dir=args.cache_dir,
             )
         # See more about loading custom images at
