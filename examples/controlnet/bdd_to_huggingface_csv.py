@@ -55,16 +55,20 @@ def bdd_to_hf_csv(image_folder: Path, condition_folder: Path, caption_folder: Pa
     })
     
     train_df, val_df = train_test_split(df,test_size = 0.1,random_state=42)
-    test_df = train_test_split(val_df,test_size=0.2,random_state=42)
+    train_df = df.sample(frac=0.9,random_state=42)
+
+    val_df = df.drop(train_df.index)
+    test_df = val_df.sample(frac=0.2,random_state=84)
+    val_df = val_df.drop(test_df.index)
     
     output_csv_path_train: Path = output_folder / "bdd_hf_dataset_train.csv"
     output_csv_path_val: Path = output_folder / "bdd_hf_dataset_val.csv"
     output_csv_path_test: Path = output_folder / "bdd_hf_dataset_test.csv"
     
     
-    df.to_csv(output_csv_path_train, index=False)
-    df.to_csv(output_csv_path_val, index=False)
-    df.to_csv(output_csv_path_test, index=False)
+    train_df.to_csv(output_csv_path_train, index=False)
+    val_df.to_csv(output_csv_path_val, index=False)
+    test_df.to_csv(output_csv_path_test, index=False)
     
     
 if __name__ == "__main__":

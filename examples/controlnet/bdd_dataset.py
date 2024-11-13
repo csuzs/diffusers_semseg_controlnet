@@ -34,15 +34,15 @@ class NewDataset(datasets.GeneratorBasedBuilder):
         return [
             datasets.SplitGenerator(
                 name=datasets.Split.TRAIN,
-                gen_kwargs={"filepath": os.path.join(data_dir, "train.csv"), "split": "train"},
+                gen_kwargs={"filepath": os.path.join(data_dir, "bdd_hf_dataset_train.csv"), "split": "train"},
             ),
             datasets.SplitGenerator(
                 name=datasets.Split.VALIDATION,
-                gen_kwargs={"filepath": os.path.join(data_dir, "val.csv"), "split": "val"},
+                gen_kwargs={"filepath": os.path.join(data_dir, "bdd_hf_dataset_val.csv"), "split": "val"},
             ),
             datasets.SplitGenerator(
                 name=datasets.Split.TEST,
-                gen_kwargs={"filepath": os.path.join(data_dir, "test.csv"), "split": "test"},
+                gen_kwargs={"filepath": os.path.join(data_dir, "bdd_hf_dataset_test.csv"), "split": "test"},
             ),
         ]
 

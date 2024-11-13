@@ -239,7 +239,7 @@ These are controlnet weights trained on {base_model} with new type of conditioni
         license="openrail++",
         base_model=base_model,
         model_description=model_description,
-        inference=True,
+    inference=True,
     )
 
     tags = [
@@ -648,6 +648,8 @@ def get_train_dataset(args, accelerator):
             dataset = load_dataset(
                 "bdd_dataset.py",
                 cache_dir=args.cache_dir,
+                data_dir=args.train_data_dir,
+                trust_remote_code=True
             )
         # See more about loading custom images at
         # https://huggingface.co/docs/datasets/v2.0.0/en/dataset_script
