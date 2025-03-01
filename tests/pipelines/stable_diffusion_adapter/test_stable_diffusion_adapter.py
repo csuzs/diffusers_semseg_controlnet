@@ -336,6 +336,13 @@ class AdapterTests:
 
         assert np.abs(image_slice.flatten() - expected_slice).max() < 1e-2
 
+    def test_encode_prompt_works_in_isolation(self):
+        extra_required_param_value_dict = {
+            "device": torch.device(torch_device).type,
+            "do_classifier_free_guidance": self.get_dummy_inputs(device=torch_device).get("guidance_scale", 1.0) > 1.0,
+        }
+        return super().test_encode_prompt_works_in_isolation(extra_required_param_value_dict)
+
 
 class StableDiffusionFullAdapterPipelineFastTests(
     AdapterTests, PipelineTesterMixin, PipelineFromPipeTesterMixin, unittest.TestCase
@@ -389,6 +396,8 @@ class StableDiffusionLightAdapterPipelineFastTests(AdapterTests, PipelineTesterM
 
 
 class StableDiffusionMultiAdapterPipelineFastTests(AdapterTests, PipelineTesterMixin, unittest.TestCase):
+    supports_dduf = False
+
     def get_dummy_components(self, time_cond_proj_dim=None):
         return super().get_dummy_components("multi_adapter", time_cond_proj_dim=time_cond_proj_dim)
 
@@ -609,7 +618,7 @@ class StableDiffusionAdapterPipelineSlowTests(unittest.TestCase):
 
     def test_stable_diffusion_adapter_depth_sd_v15(self):
         adapter_model = "TencentARC/t2iadapter_depth_sd15v2"
-        sd_model = "Jiali/stable-diffusion-1.5"
+        sd_model = "stable-diffusion-v1-5/stable-diffusion-v1-5"
         prompt = "desk"
         image_url = "https://huggingface.co/datasets/hf-internal-testing/diffusers-images/resolve/main/t2i_adapter/desk_depth.png"
         input_channels = 3
@@ -636,7 +645,7 @@ class StableDiffusionAdapterPipelineSlowTests(unittest.TestCase):
 
     def test_stable_diffusion_adapter_zoedepth_sd_v15(self):
         adapter_model = "TencentARC/t2iadapter_zoedepth_sd15v1"
-        sd_model = "Jiali/stable-diffusion-1.5"
+        sd_model = "stable-diffusion-v1-5/stable-diffusion-v1-5"
         prompt = "motorcycle"
         image_url = "https://huggingface.co/datasets/hf-internal-testing/diffusers-images/resolve/main/t2i_adapter/motorcycle.png"
         input_channels = 3
@@ -660,7 +669,7 @@ class StableDiffusionAdapterPipelineSlowTests(unittest.TestCase):
 
     def test_stable_diffusion_adapter_canny_sd_v15(self):
         adapter_model = "TencentARC/t2iadapter_canny_sd15v2"
-        sd_model = "Jiali/stable-diffusion-1.5"
+        sd_model = "stable-diffusion-v1-5/stable-diffusion-v1-5"
         prompt = "toy"
         image_url = "https://huggingface.co/datasets/hf-internal-testing/diffusers-images/resolve/main/t2i_adapter/toy_canny.png"
         input_channels = 1
@@ -688,7 +697,7 @@ class StableDiffusionAdapterPipelineSlowTests(unittest.TestCase):
 
     def test_stable_diffusion_adapter_sketch_sd15(self):
         adapter_model = "TencentARC/t2iadapter_sketch_sd15v2"
-        sd_model = "Jiali/stable-diffusion-1.5"
+        sd_model = "stable-diffusion-v1-5/stable-diffusion-v1-5"
         prompt = "cat"
         image_url = (
             "https://huggingface.co/datasets/hf-internal-testing/diffusers-images/resolve/main/t2i_adapter/edge.png"

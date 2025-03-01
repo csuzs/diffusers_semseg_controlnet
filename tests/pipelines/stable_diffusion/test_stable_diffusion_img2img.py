@@ -391,6 +391,13 @@ class StableDiffusionImg2ImgPipelineFastTests(
         # they should be the same
         assert torch.allclose(intermediate_latent, output_interrupted, atol=1e-4)
 
+    def test_encode_prompt_works_in_isolation(self):
+        extra_required_param_value_dict = {
+            "device": torch.device(torch_device).type,
+            "do_classifier_free_guidance": self.get_dummy_inputs(device=torch_device).get("guidance_scale", 1.0) > 1.0,
+        }
+        return super().test_encode_prompt_works_in_isolation(extra_required_param_value_dict)
+
 
 @slow
 @require_torch_gpu
@@ -566,7 +573,7 @@ class StableDiffusionImg2ImgPipelineSlowTests(unittest.TestCase):
             assert module.device == torch.device("cpu")
 
     def test_img2img_2nd_order(self):
-        sd_pipe = StableDiffusionImg2ImgPipeline.from_pretrained("Jiali/stable-diffusion-1.5")
+        sd_pipe = StableDiffusionImg2ImgPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5")
         sd_pipe.scheduler = HeunDiscreteScheduler.from_config(sd_pipe.scheduler.config)
         sd_pipe.to(torch_device)
         sd_pipe.set_progress_bar_config(disable=None)
@@ -630,7 +637,7 @@ class StableDiffusionImg2ImgPipelineSlowTests(unittest.TestCase):
         assert np.abs(image_slice.flatten() - expected_slice).max() < 5e-3
 
     def test_img2img_safety_checker_works(self):
-        sd_pipe = StableDiffusionImg2ImgPipeline.from_pretrained("Jiali/stable-diffusion-1.5")
+        sd_pipe = StableDiffusionImg2ImgPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5")
         sd_pipe.to(torch_device)
         sd_pipe.set_progress_bar_config(disable=None)
 
@@ -686,7 +693,7 @@ class StableDiffusionImg2ImgPipelineNightlyTests(unittest.TestCase):
         return inputs
 
     def test_img2img_pndm(self):
-        sd_pipe = StableDiffusionImg2ImgPipeline.from_pretrained("Jiali/stable-diffusion-1.5")
+        sd_pipe = StableDiffusionImg2ImgPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5")
         sd_pipe.to(torch_device)
         sd_pipe.set_progress_bar_config(disable=None)
 
@@ -701,7 +708,7 @@ class StableDiffusionImg2ImgPipelineNightlyTests(unittest.TestCase):
         assert max_diff < 1e-3
 
     def test_img2img_ddim(self):
-        sd_pipe = StableDiffusionImg2ImgPipeline.from_pretrained("Jiali/stable-diffusion-1.5")
+        sd_pipe = StableDiffusionImg2ImgPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5")
         sd_pipe.scheduler = DDIMScheduler.from_config(sd_pipe.scheduler.config)
         sd_pipe.to(torch_device)
         sd_pipe.set_progress_bar_config(disable=None)
@@ -717,7 +724,7 @@ class StableDiffusionImg2ImgPipelineNightlyTests(unittest.TestCase):
         assert max_diff < 1e-3
 
     def test_img2img_lms(self):
-        sd_pipe = StableDiffusionImg2ImgPipeline.from_pretrained("Jiali/stable-diffusion-1.5")
+        sd_pipe = StableDiffusionImg2ImgPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5")
         sd_pipe.scheduler = LMSDiscreteScheduler.from_config(sd_pipe.scheduler.config)
         sd_pipe.to(torch_device)
         sd_pipe.set_progress_bar_config(disable=None)
@@ -733,7 +740,7 @@ class StableDiffusionImg2ImgPipelineNightlyTests(unittest.TestCase):
         assert max_diff < 1e-3
 
     def test_img2img_dpm(self):
-        sd_pipe = StableDiffusionImg2ImgPipeline.from_pretrained("Jiali/stable-diffusion-1.5")
+        sd_pipe = StableDiffusionImg2ImgPipeline.from_pretrained("stable-diffusion-v1-5/stable-diffusion-v1-5")
         sd_pipe.scheduler = DPMSolverMultistepScheduler.from_config(sd_pipe.scheduler.config)
         sd_pipe.to(torch_device)
         sd_pipe.set_progress_bar_config(disable=None)
