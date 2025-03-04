@@ -100,6 +100,7 @@ def log_validation(vae, unet, controlnet, args, accelerator, weight_dtype, step,
             torch_dtype=weight_dtype,
         )
 
+
     pipeline.scheduler = UniPCMultistepScheduler.from_config(pipeline.scheduler.config)
     pipeline = pipeline.to(accelerator.device)
     pipeline.set_progress_bar_config(disable=True)
@@ -891,7 +892,7 @@ def main(args):
     unet = UNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet", revision=args.revision, variant=args.variant
     )
-
+    
     if args.controlnet_model_name_or_path:
         logger.info("Loading existing controlnet weights")
         controlnet = ControlNetModel.from_pretrained(args.controlnet_model_name_or_path)

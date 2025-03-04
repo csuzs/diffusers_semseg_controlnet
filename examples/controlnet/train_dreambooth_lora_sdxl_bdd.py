@@ -81,7 +81,7 @@ if is_wandb_available():
 # Will error if the minimal version of diffusers is not installed. Remove at your own risks.
 check_min_version("0.33.0.dev0")
 
-logger = get_logger(__name__)
+logger = get_logger(__name__,log_level = "DEBUG")
 
 
 def determine_scheduler_type(pretrained_model_name_or_path, revision):
@@ -316,7 +316,16 @@ def parse_args(input_args=None):
         default=None,
         help="The directory where the downloaded models and datasets will be stored.",
     )
-
+    parser.add_argument(
+        "--train_data_dir",
+        type=str,
+        default=None,
+        help=(
+            "A folder containing the training data. Folder contents must follow the structure described in"
+            " https://huggingface.co/docs/datasets/image_dataset#imagefolder. In particular, a `metadata.jsonl` file"
+            " must exist to provide the captions for the images. Ignored if `dataset_name` is specified."
+        ),
+    )
     parser.add_argument(
         "--image_column",
         type=str,
@@ -345,7 +354,7 @@ def parse_args(input_args=None):
         "--instance_prompt",
         type=str,
         default=None,
-        required=True,
+        required=False,
         help="The prompt with identifier specifying the instance, e.g. 'photo of a TOK dog', 'in the style of TOK'",
     )
     parser.add_argument(
@@ -403,6 +412,7 @@ def parse_args(input_args=None):
         default="lora-dreambooth-model",
         help="The output directory where the model predictions and checkpoints will be written.",
     )
+    
     parser.add_argument(
         "--output_kohya_format",
         action="store_true",
@@ -668,6 +678,7 @@ def parse_args(input_args=None):
             "Note: to use DoRA you need to install peft from main, `pip install git+https://github.com/huggingface/peft.git`"
         ),
     )
+    
 
     if input_args is not None:
         args = parser.parse_args(input_args)
@@ -737,10 +748,12 @@ class DreamBoothDataset(Dataset):
             # Downloading and loading a dataset from the hub.
             # See more about loading custom images at
             # https://huggingface.co/docs/datasets/v2.0.0/en/dataset_script
+            breakpoint()
             dataset = load_dataset(
-                args.dataset_name,
-                args.dataset_config_name,
+                "bdd_dataset.py",
                 cache_dir=args.cache_dir,
+                data_dir=args.train_data_dir,
+                trust_remote_code=True,
             )
             # Preprocessing the datasets.
             column_names = dataset["train"].column_names
@@ -790,10 +803,10 @@ class DreamBoothDataset(Dataset):
         self.original_sizes = []
         self.crop_top_lefts = []
         self.pixel_values = []
-        train_resize = transforms.Resize(size, interpolation=transforms.InterpolationMode.BILINEAR)
-        train_crop = transforms.CenterCrop(size) if center_crop else transforms.RandomCrop(size)
-        train_flip = transforms.RandomHorizontalFlip(p=1.0)
-        train_transforms = transforms.Compose(
+        self.train_resize = transforms.Resize(size, interpolation=transforms.InterpolationMode.BILINEAR)
+        self.train_crop = transforms.CenterCrop(size) if center_crop else transforms.RandomCrop(size)
+        self.train_flip = transforms.RandomHorizontalFlip(p=1.0)
+        self.train_transforms = transforms.Compose(
             [
                 transforms.ToTensor(),
                 transforms.Normalize([0.5], [0.5]),
@@ -822,6 +835,7 @@ class DreamBoothDataset(Dataset):
 
         self.num_instance_images = len(self.instance_images)
         self._length = self.num_instance_images
+
 
         if class_data_root is not None:
             self.class_data_root = Path(class_data_root)
@@ -1134,7 +1148,6 @@ def main(args):
     unet = UNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet", revision=args.revision, variant=args.variant
     )
-
     # We only train the additional adapter LoRA layers
     vae.requires_grad_(False)
     text_encoder_one.requires_grad_(False)

@@ -22,7 +22,7 @@ accelerate launch --config_file=/project_workspace/uic19759/diffusers_semseg_con
  --gradient_accumulation_steps=1 \
  --gradient_checkpointing \
  --use_8bit_adam \
- --checkpointing_steps=6302 \
+ --checkpointing_steps=2000 \
  --resume_from_checkpoint='latest' \
  --report_to='wandb' \
  --pretrained_vae_model_name_or_path='madebyollin/sdxl-vae-fp16-fix'
