@@ -748,7 +748,6 @@ class DreamBoothDataset(Dataset):
             # Downloading and loading a dataset from the hub.
             # See more about loading custom images at
             # https://huggingface.co/docs/datasets/v2.0.0/en/dataset_script
-            breakpoint()
             dataset = load_dataset(
                 "bdd_dataset.py",
                 cache_dir=args.cache_dir,
@@ -768,7 +767,7 @@ class DreamBoothDataset(Dataset):
                     raise ValueError(
                         f"`--image_column` value '{args.image_column}' not found in dataset columns. Dataset columns are: {', '.join(column_names)}"
                     )
-            instance_images = dataset["train"][image_column]
+            instance_image_paths = dataset["train"][image_column]
 
             if args.caption_column is None:
                 logger.info(
@@ -792,17 +791,18 @@ class DreamBoothDataset(Dataset):
             if not self.instance_data_root.exists():
                 raise ValueError("Instance images root doesn't exists.")
 
-            instance_images = [Image.open(path) for path in list(Path(instance_data_root).iterdir())]
+            instance_image_paths = [path for path in list(Path(instance_data_root).iterdir())]
+            
             self.custom_instance_prompts = None
 
-        self.instance_images = []
-        for img in instance_images:
-            self.instance_images.extend(itertools.repeat(img, repeats))
+        self.instance_image_paths = []
+        for pth in instance_image_paths:
+            self.instance_image_paths.extend(itertools.repeat(pth, repeats))
 
+        self._length = len(self.instance_image_paths)
+        self.num_instance_images = len(self.instance_image_paths)
         # image processing to prepare for using SD-XL micro-conditioning
-        self.original_sizes = []
-        self.crop_top_lefts = []
-        self.pixel_values = []
+        
         self.train_resize = transforms.Resize(size, interpolation=transforms.InterpolationMode.BILINEAR)
         self.train_crop = transforms.CenterCrop(size) if center_crop else transforms.RandomCrop(size)
         self.train_flip = transforms.RandomHorizontalFlip(p=1.0)
@@ -812,30 +812,6 @@ class DreamBoothDataset(Dataset):
                 transforms.Normalize([0.5], [0.5]),
             ]
         )
-        for image in self.instance_images:
-            image = exif_transpose(image)
-            if not image.mode == "RGB":
-                image = image.convert("RGB")
-            self.original_sizes.append((image.height, image.width))
-            image = train_resize(image)
-            if args.random_flip and random.random() < 0.5:
-                # flip
-                image = train_flip(image)
-            if args.center_crop:
-                y1 = max(0, int(round((image.height - args.resolution) / 2.0)))
-                x1 = max(0, int(round((image.width - args.resolution) / 2.0)))
-                image = train_crop(image)
-            else:
-                y1, x1, h, w = train_crop.get_params(image, (args.resolution, args.resolution))
-                image = crop(image, y1, x1, h, w)
-            crop_top_left = (y1, x1)
-            self.crop_top_lefts.append(crop_top_left)
-            image = train_transforms(image)
-            self.pixel_values.append(image)
-
-        self.num_instance_images = len(self.instance_images)
-        self._length = self.num_instance_images
-
 
         if class_data_root is not None:
             self.class_data_root = Path(class_data_root)
@@ -862,10 +838,29 @@ class DreamBoothDataset(Dataset):
         return self._length
 
     def __getitem__(self, index):
+        instance_image = self.instance_image_paths[index % self.num_instance_images]
+
+        instance_image = exif_transpose(instance_image)
+        if not instance_image.mode == "RGB":
+            instance_image = instance_image.convert("RGB")
+        original_size = (instance_image.height, instance_image.width)
+        
+        instance_image = self.train_resize(instance_image)
+        if args.random_flip and random.random() < 0.5:
+            # flip
+            instance_image = self.train_flip(instance_image)
+        if args.center_crop:
+            y1 = max(0, int(round((instance_image.height - args.resolution) / 2.0)))
+            x1 = max(0, int(round((instance_image.width - args.resolution) / 2.0)))
+            instance_image = self.train_crop(instance_image)
+        else:
+            y1, x1, h, w = self.train_crop.get_params(instance_image, (args.resolution, args.resolution))
+            instance_image = crop(instance_image, y1, x1, h, w)
+        crop_top_left = (y1, x1)
+        instance_image = self.train_transforms(instance_image)
+        
+        
         example = {}
-        instance_image = self.pixel_values[index % self.num_instance_images]
-        original_size = self.original_sizes[index % self.num_instance_images]
-        crop_top_left = self.crop_top_lefts[index % self.num_instance_images]
         example["instance_images"] = instance_image
         example["original_size"] = original_size
         example["crop_top_left"] = crop_top_left
